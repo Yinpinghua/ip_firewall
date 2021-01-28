@@ -1,5 +1,3 @@
-#include "pch.h"
-#include "framework.h"
 #include "ip_port_filter.h"
 #include <iostream>
 #define MEM_FN1(func,class_type,ptr) std::bind(&class_type::func,ptr,std::placeholders::_1)
