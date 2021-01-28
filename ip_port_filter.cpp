@@ -1,4 +1,7 @@
+#include "pch.h"
+#include "framework.h"
 #include "ip_port_filter.h"
+#include <iostream>
 #define MEM_FN1(func,class_type,ptr) std::bind(&class_type::func,ptr,std::placeholders::_1)
 
 wchar_t filter_display_name[] = { L"filter display name PFirewall" };
@@ -14,10 +17,10 @@ ip_port_filter::~ip_port_filter()
 	clear_res();
 }
 
-uint64_t ip_port_filter::filter(const int msg_id,const filter_info& info)
+uint64_t ip_port_filter::filter(const int msg_id, const filter_info& info)
 {
 	auto iter_find = msgs_.find(msg_id);
-	if (iter_find == msgs_.end()){
+	if (iter_find == msgs_.end()) {
 		return 0;
 	}
 
@@ -30,11 +33,11 @@ uint64_t ip_port_filter::block_ip(const filter_info& info)
 		init_falg_ = init();
 	}
 
-	if (!init_falg_){
+	if (!init_falg_) {
 		return 0;
 	}
 
-	if (info.dest_ip.empty() && info.source_ip.empty()){
+	if (info.dest_ip.empty() && info.source_ip.empty()) {
 		return 0;
 	}
 
@@ -52,8 +55,8 @@ uint64_t ip_port_filter::block_ip(const filter_info& info)
 	fwp_filter.weight.type = FWP_EMPTY;
 	fwp_filter.displayData.name = filter_display_name;
 
-	if (!info.dest_ip.empty()){
-		(info.dir == data_direction::dir_in) ? (fwp_conditions[index].fieldKey = FWPM_CONDITION_IP_LOCAL_ADDRESS) : 
+	if (!info.dest_ip.empty()) {
+		(info.dir == data_direction::dir_in) ? (fwp_conditions[index].fieldKey = FWPM_CONDITION_IP_LOCAL_ADDRESS) :
 			(fwp_conditions[index].fieldKey = FWPM_CONDITION_IP_REMOTE_ADDRESS);
 
 		fwp_conditions[index].matchType = FWP_MATCH_EQUAL;
@@ -64,8 +67,8 @@ uint64_t ip_port_filter::block_ip(const filter_info& info)
 		++index;
 	}
 
-	if (!info.source_ip.empty()){
-		(info.dir == data_direction::dir_in) ? (fwp_conditions[index].fieldKey = FWPM_CONDITION_IP_REMOTE_ADDRESS) : 
+	if (!info.source_ip.empty()) {
+		(info.dir == data_direction::dir_in) ? (fwp_conditions[index].fieldKey = FWPM_CONDITION_IP_REMOTE_ADDRESS) :
 			(fwp_conditions[index].fieldKey = FWPM_CONDITION_IP_LOCAL_ADDRESS);
 
 		fwp_conditions[index].matchType = FWP_MATCH_EQUAL;
@@ -80,18 +83,21 @@ uint64_t ip_port_filter::block_ip(const filter_info& info)
 	fwp_filter.filterCondition = fwp_conditions;
 	unsigned long result = ERROR_SUCCESS;
 	result = FwpmTransactionBegin0(engine_, NULL);
-	if (result != ERROR_SUCCESS){
+	if (result != ERROR_SUCCESS) {
+		std::cout << "block ip fail:" << "fwp transaction:" << result << std::endl;
 		return 0;
 	}
 
-	uint64_t rule_id =0;
+	uint64_t rule_id = 0;
 	result = FwpmFilterAdd0(engine_, &fwp_filter, NULL, &rule_id);
-	if (result != ERROR_SUCCESS){
+	if (result != ERROR_SUCCESS) {
+		std::cout << "block ip fail:" << "fwp add:" << result<<std::endl;
 		return 0;
 	}
 
 	result = FwpmTransactionCommit0(engine_);
-	if (result != ERROR_SUCCESS){
+	if (result != ERROR_SUCCESS) {
+		std::cout << "block ip fail:" << "fwp commit:" << result << std::endl;
 		FwpmTransactionAbort0(engine_);
 		return 0;
 	}
@@ -171,17 +177,20 @@ uint64_t ip_port_filter::block_tcp(const filter_info& info)
 	unsigned long result = ERROR_SUCCESS;
 	result = FwpmTransactionBegin0(engine_, NULL);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block tcp fail:" << "fwp transaction:" << result << std::endl;
 		return 0;
 	}
 
 	uint64_t rule_id = 0;
 	result = FwpmFilterAdd0(engine_, &fwp_filter, NULL, &rule_id);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block tcp fail:" << "fwp add:" << result << std::endl;
 		return 0;
 	}
 
 	result = FwpmTransactionCommit0(engine_);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block tcp fail:" << "fwp commit:" << result << std::endl;
 		FwpmTransactionAbort0(engine_);
 		return 0;
 	}
@@ -260,17 +269,20 @@ uint64_t ip_port_filter::block_udp(const filter_info& info)
 	unsigned long result = ERROR_SUCCESS;
 	result = FwpmTransactionBegin0(engine_, NULL);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block udp fail:" << "fwp transaction:" << result << std::endl;
 		return 0;
 	}
 
 	uint64_t rule_id = 0;
 	result = FwpmFilterAdd0(engine_, &fwp_filter, NULL, &rule_id);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block udp fail:" << "fwp add:" << result << std::endl;
 		return 0;
 	}
 
 	result = FwpmTransactionCommit0(engine_);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block udp fail:" << "fwp commit:" << result << std::endl;
 		FwpmTransactionAbort0(engine_);
 		return 0;
 	}
@@ -337,17 +349,20 @@ uint64_t ip_port_filter::block_icmp(const filter_info& info)
 	unsigned long result = ERROR_SUCCESS;
 	result = FwpmTransactionBegin0(engine_, NULL);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block icmp fail:" << "fwp transaction:" << result << std::endl;
 		return 0;
 	}
 
 	uint64_t rule_id = 0;
 	result = FwpmFilterAdd0(engine_, &fwp_filter, NULL, &rule_id);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block icmp fail:" << "fwp add:" << result << std::endl;
 		return 0;
 	}
 
 	result = FwpmTransactionCommit0(engine_);
 	if (result != ERROR_SUCCESS) {
+		std::cout << "block icmp fail:" << "fwp commit:" << result << std::endl;
 		FwpmTransactionAbort0(engine_);
 		return 0;
 	}
@@ -359,7 +374,7 @@ uint64_t ip_port_filter::block_icmp(const filter_info& info)
 ip_port_filter::ip_port_filter()
 {
 	regedit_msg_func(static_cast<int>(filter_msg::ip_protocol),
-		MEM_FN1(block_ip,ip_port_filter,this));
+		MEM_FN1(block_ip, ip_port_filter, this));
 
 	regedit_msg_func(static_cast<int>(filter_msg::tcp_protocol),
 		MEM_FN1(block_tcp, ip_port_filter, this));
@@ -373,23 +388,24 @@ ip_port_filter::ip_port_filter()
 
 bool ip_port_filter::delte_rule(const uint64_t rule_id)
 {
-	auto iter_find = std::find_if(rules_.begin(), rules_.end(), 
+	auto iter_find = std::find_if(rules_.begin(), rules_.end(),
 		[rule_id](const uint64_t value) {return value == rule_id;});
 
-	if ( iter_find == rules_.end()){
+	if (iter_find == rules_.end()) {
+		std::cout << "pass rule_id fail:" <<rule_id<< std::endl;
 		return false;
 	}
 
 	unsigned long result = ERROR_SUCCESS;
 	result = FwpmFilterDeleteById0(engine_, rule_id);
-	if (result != ERROR_SUCCESS){
-		FwpmEngineClose0(engine_);
+	if (result != ERROR_SUCCESS) {
+		std::cout << "delete:" << rule_id << "fail" << std::endl;
 		return false;
 	}
 
 	rules_.erase(iter_find);
 
-	if (rules_.size() ==0){
+	if (rules_.size() == 0) {
 		clear_res();
 	}
 
@@ -399,12 +415,12 @@ bool ip_port_filter::delte_rule(const uint64_t rule_id)
 bool ip_port_filter::clear_all_rule()
 {
 	auto iter_beg = rules_.begin();
-	for (;iter_beg != rules_.end();++iter_beg){
+	for (;iter_beg != rules_.end();++iter_beg) {
 		unsigned long result = ERROR_SUCCESS;
-		result = FwpmFilterDeleteById0(engine_,*iter_beg);
+		uint64_t rule_id = *iter_beg;
+		result = FwpmFilterDeleteById0(engine_, *iter_beg);
 		if (result != ERROR_SUCCESS) {
-			FwpmEngineClose0(engine_);
-			break;
+			std::cout << "delete:" << rule_id << "fail" << std::endl;
 		}
 	}
 
@@ -417,7 +433,8 @@ bool ip_port_filter::init()
 	memset(&fwp_sub_layer_, 0, sizeof(fwp_sub_layer_));
 	RPC_STATUS rpc_status = RPC_S_OK;
 	rpc_status = UuidCreate(&fwp_sub_layer_.subLayerKey);
-	if (rpc_status != RPC_S_OK){
+	if (rpc_status != RPC_S_OK) {
+		std::cout << "uuid create fail" << std::endl;
 		return false;
 	}
 
@@ -429,13 +446,14 @@ bool ip_port_filter::init()
 	fwp_sub_layer_.weight = 0x100;
 
 	unsigned long result = FwpmEngineOpen0(NULL, RPC_C_AUTHN_WINNT, NULL, NULL, &engine_);
-	if (result != ERROR_SUCCESS){
+	if (result != ERROR_SUCCESS) {
+		std::cout << "fwp engine open fail" << std::endl;
 		return false;
 	}
 
 	result = FwpmSubLayerAdd0(engine_, &fwp_sub_layer_, NULL);
-	if (result != ERROR_SUCCESS){
-		FwpmEngineClose0(engine_);
+	if (result != ERROR_SUCCESS) {
+		std::cout << "fwp sub layer fail" << result <<std::endl;
 		return false;
 	}
 
@@ -484,12 +502,12 @@ int ip_port_filter::inet4_pton(const char* cp, uint32_t& ap)
 
 void ip_port_filter::clear_res()
 {
-	if (engine_ == nullptr){
+	if (engine_ == nullptr) {
 		init_falg_ = false;
 		return;
 	}
 
-	FwpmSubLayerDeleteByKey0(engine_,&sub_layer_guid_);
+	FwpmSubLayerDeleteByKey0(engine_, &sub_layer_guid_);
 	init_falg_ = false;
 	FwpmEngineClose0(engine_);
 	engine_ = nullptr;
